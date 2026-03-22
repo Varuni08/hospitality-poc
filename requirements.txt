@@ -1,0 +1,15 @@
+groq
+pinecone
+sentence-transformers
+supabase
+langchain
+langchain-groq
+langchain-community
+langchain-text-splitters
+tiktoken
+pypdf
+torch==2.3.0
+huggingface-hub==0.23.0
+numpy
+pandas
+tqdm
