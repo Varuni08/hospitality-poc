@@ -32,7 +32,6 @@ def retrieve_menu_chunks(query: str, top_k: int = 6) -> str:
     chunks = []
     for m in results.matches:
         meta = m["metadata"]
-        # Build text from whatever fields exist
         text = meta.get("text", "")
         if not text:
             text = " | ".join(
