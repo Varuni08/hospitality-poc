@@ -104,6 +104,16 @@ def save_callback(data: dict) -> str:
 
 
 def execute_action(action_block: dict) -> str:
+    json_match = re.search(r'\{[^{}]*"action"[^{}]*\}', reply, re.DOTALL)
+    if json_match:
+        try:
+            action_block  = json.loads(json_match.group())
+            action_result = execute_action(action_block)
+            if action_result:
+                reply = re.sub(r'\{[^{}]*"action"[^{}]*\}', action_result, reply, flags=re.DOTALL)
+        except json.JSONDecodeError:
+            pass
+            
     action = action_block.get("action", "none")
 
     if action == "save_reservation":
