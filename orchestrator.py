@@ -111,28 +111,28 @@ Return strictly in this format:
         return "\n\n".join(valid) if valid else "Sorry, I couldn't process that."
 
     def handle(self, user_message: str, session: dict) -> str:
-    if "active_agent" in session:
-        active = session["active_agent"]
-        routing = self.route(user_message)
-        new_agent = routing.get("agents", [active])[0]
-        if new_agent != active:
-            session.pop("active_agent", None)
-            selected_agents = routing.get("agents", ["info_agent"])
+        if "active_agent" in session:
+            active = session["active_agent"]
+            routing = self.route(user_message)
+            new_agent = routing.get("agents", [active])[0]
+            if new_agent != active:
+                session.pop("active_agent", None)
+                selected_agents = routing.get("agents", ["info_agent"])
+            else:
+                selected_agents = [active]
         else:
-            selected_agents = [active]
-    else:
-        routing = self.route(user_message)
-        selected_agents = routing.get("agents", ["info_agent"])
+            routing = self.route(user_message)
+            selected_agents = routing.get("agents", ["info_agent"])
 
-    if len(selected_agents) == 1:
-        session["active_agent"] = selected_agents[0]
+        if len(selected_agents) == 1:
+            session["active_agent"] = selected_agents[0]
 
-    print(f"\n Router → {selected_agents}")
+        print(f"\n Router → {selected_agents}")
 
-    outputs = {}
-    for agent_name in selected_agents:
-        agent_fn = self.agent_registry.get(agent_name)
-        if agent_fn:
-            outputs[agent_name] = agent_fn(user_message, session)
+        outputs = {}
+        for agent_name in selected_agents:
+            agent_fn = self.agent_registry.get(agent_name)
+            if agent_fn:
+                outputs[agent_name] = agent_fn(user_message, session)
 
-    return self.combine_outputs(outputs)
+        return self.combine_outputs(outputs)
