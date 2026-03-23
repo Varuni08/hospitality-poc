@@ -110,7 +110,7 @@ Return strictly in this format:
         valid = [v for v in outputs.values() if v]
         return "\n\n".join(valid) if valid else "Sorry, I couldn't process that."
 
-   def handle(self, user_message: str, session: dict) -> str:
+    def handle(self, user_message: str, session: dict) -> str:
         word_count = len(user_message.strip().split())
         is_short_reply = word_count <= 3
 
