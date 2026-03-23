@@ -110,11 +110,11 @@ Return strictly in this format:
         valid = [v for v in outputs.values() if v]
         return "\n\n".join(valid) if valid else "Sorry, I couldn't process that."
 
-    def handle(self, user_message: str, session: dict) -> str:
-        short_replies = {"yes", "no", "ok", "okay", "sure", "correct", "right", 
-                        "yep", "nope", "please", "thanks", "thank you"}
-        
-        if "active_agent" in session and user_message.lower().strip() in short_replies:
+   def handle(self, user_message: str, session: dict) -> str:
+        word_count = len(user_message.strip().split())
+        is_short_reply = word_count <= 3
+
+        if "active_agent" in session and is_short_reply:
             selected_agents = [session["active_agent"]]
         elif "active_agent" in session:
             active  = session["active_agent"]
