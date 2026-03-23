@@ -111,8 +111,13 @@ Return strictly in this format:
         return "\n\n".join(valid) if valid else "Sorry, I couldn't process that."
 
     def handle(self, user_message: str, session: dict) -> str:
-        if "active_agent" in session:
-            active = session["active_agent"]
+        short_replies = {"yes", "no", "ok", "okay", "sure", "correct", "right", 
+                        "yep", "nope", "please", "thanks", "thank you"}
+        
+        if "active_agent" in session and user_message.lower().strip() in short_replies:
+            selected_agents = [session["active_agent"]]
+        elif "active_agent" in session:
+            active  = session["active_agent"]
             routing = self.route(user_message)
             new_agent = routing.get("agents", [active])[0]
             if new_agent != active:
