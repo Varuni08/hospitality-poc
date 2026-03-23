@@ -104,46 +104,28 @@ def save_callback(data: dict) -> str:
 
 
 def execute_action(action_block: dict) -> str:
-    json_match = re.search(r'\{[^{}]*"action"[^{}]*\}', reply, re.DOTALL)
-    if json_match:
-        try:
-            action_block  = json.loads(json_match.group())
+    # Check for action block and execute it
+    try:
+        start = reply.find('{"action"')
+        if start != -1:
+            # Find matching closing brace
+            depth = 0
+            end = start
+            for i, char in enumerate(reply[start:]):
+                if char == '{':
+                    depth += 1
+                elif char == '}':
+                    depth -= 1
+                    if depth == 0:
+                        end = start + i + 1
+                        break
+            json_str = reply[start:end]
+            action_block = json.loads(json_str)
             action_result = execute_action(action_block)
             if action_result:
-                reply = re.sub(r'\{[^{}]*"action"[^{}]*\}', action_result, reply, flags=re.DOTALL)
-        except json.JSONDecodeError:
-            pass
-            
-    action = action_block.get("action", "none")
-
-    if action == "save_reservation":
-        res_id = save_reservation(action_block["data"])
-        return f"Reservation confirmed! Your ID is **{res_id}**."
-
-    elif action == "find_reservation":
-        rec = find_reservation(action_block["query"])
-        if rec:
-            return (
-                f"Found reservation **{rec['id']}** for {rec['name']} — "
-                f"{rec['date']} at {rec['time']} for {rec['guests']} guests. "
-                f"Status: {rec['status']}."
-            )
-        return "No reservation found with that information."
-
-    elif action == "modify_reservation":
-        ok = modify_reservation(action_block["id"], action_block["field"], action_block["value"])
-        return "Reservation updated!" if ok else "Could not update — invalid field."
-
-    elif action == "cancel_reservation":
-        cancel_reservation(action_block["id"])
-        return f"Reservation {action_block['id']} has been cancelled."
-
-    elif action == "save_callback":
-        ref = save_callback(action_block["data"])
-        return f"Callback request logged! Reference: **{ref}**. We'll call you soon."
-
-    return ""
-
+                reply = reply[:start] + action_result + reply[end:]
+    except (json.JSONDecodeError, Exception):
+        pass
 
 def run_reservation_agent(user_message: str, session: dict) -> str:
     if "reservation_history" not in session:
