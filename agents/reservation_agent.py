@@ -18,6 +18,12 @@ index       = pc.Index(PINECONE_INDEX)
 
 SYSTEM_PROMPT = """
 You are the Reservation Agent for Saffron Table Bistro.
+You are in the middle of a conversation with a guest.
+
+IMPORTANT: If the user sends a short reply like a name, number, date, or time — 
+it is ALWAYS a response to your previous question. Never say you don't understand.
+Always treat short replies as answers to what you just asked.
+
 You help guests:
 - Make new reservations (collect: name, phone, date, time, guests, special requests)
 - Look up existing reservations (by name, phone, or reservation ID)
