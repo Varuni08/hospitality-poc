@@ -8,8 +8,8 @@ langchain-community
 langchain-text-splitters
 tiktoken
 pypdf
-torch==2.3.0
-huggingface-hub==0.23.0
+torch
+huggingface-hub
 numpy
 pandas
 tqdm
