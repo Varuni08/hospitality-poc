@@ -25,6 +25,7 @@ CRITICAL RULES:
 - If the user skips a field, ask for it again before moving on
 - Short replies like a name, number, or date are ALWAYS answers to your last question
 - Only generate the save_reservation JSON block when ALL 5 required fields are collected
+- ONLY output the JSON block, no extra text around it when saving
 
 You help guests:
 - Make new reservations
@@ -33,7 +34,7 @@ You help guests:
 - Cancel reservations
 - Request callbacks
 
-When ready to save, respond with this JSON block:
+When ready to save, respond ONLY with this JSON block on its own line:
 {"action": "save_reservation", "data": {"name": "", "phone": "", "date": "", "time": "", "guests": "", "special_requests": ""}}
 
 For other actions:
@@ -43,6 +44,7 @@ For other actions:
 {"action": "save_callback", "data": {"name": "", "phone": "", "reason": ""}}
 {"action": "none"}
 """
+
 
 def save_reservation(data: dict) -> str:
     res_id = f"RES{datetime.now().strftime('%y%m%d%H%M%S')}"
@@ -104,28 +106,36 @@ def save_callback(data: dict) -> str:
 
 
 def execute_action(action_block: dict) -> str:
-    # Check for action block and execute it
-    try:
-        start = reply.find('{"action"')
-        if start != -1:
-            # Find matching closing brace
-            depth = 0
-            end = start
-            for i, char in enumerate(reply[start:]):
-                if char == '{':
-                    depth += 1
-                elif char == '}':
-                    depth -= 1
-                    if depth == 0:
-                        end = start + i + 1
-                        break
-            json_str = reply[start:end]
-            action_block = json.loads(json_str)
-            action_result = execute_action(action_block)
-            if action_result:
-                reply = reply[:start] + action_result + reply[end:]
-    except (json.JSONDecodeError, Exception):
-        pass
+    action = action_block.get("action", "none")
+
+    if action == "save_reservation":
+        res_id = save_reservation(action_block["data"])
+        return f"Reservation confirmed! Your ID is **{res_id}**."
+
+    elif action == "find_reservation":
+        rec = find_reservation(action_block["query"])
+        if rec:
+            return (
+                f"Found reservation **{rec['id']}** for {rec['name']} — "
+                f"{rec['date']} at {rec['time']} for {rec['guests']} guests. "
+                f"Status: {rec['status']}."
+            )
+        return "No reservation found with that information."
+
+    elif action == "modify_reservation":
+        ok = modify_reservation(action_block["id"], action_block["field"], action_block["value"])
+        return " Reservation updated!" if ok else "Could not update — invalid field."
+
+    elif action == "cancel_reservation":
+        cancel_reservation(action_block["id"])
+        return f" Reservation {action_block['id']} has been cancelled."
+
+    elif action == "save_callback":
+        ref = save_callback(action_block["data"])
+        return f" Callback request logged! Reference: **{ref}**. We'll call you soon."
+
+    return ""
+
 
 def run_reservation_agent(user_message: str, session: dict) -> str:
     if "reservation_history" not in session:
@@ -146,15 +156,26 @@ def run_reservation_agent(user_message: str, session: dict) -> str:
     )
     reply = resp.choices[0].message.content.strip()
 
-    json_match = re.search(r'\{.*?"action".*?\}', reply, re.DOTALL)
-    if json_match:
-        try:
-            action_block  = json.loads(json_match.group())
+    try:
+        start = reply.find('{"action"')
+        if start != -1:
+            depth = 0
+            end = start
+            for i, char in enumerate(reply[start:]):
+                if char == '{':
+                    depth += 1
+                elif char == '}':
+                    depth -= 1
+                    if depth == 0:
+                        end = start + i + 1
+                        break
+            json_str = reply[start:end]
+            action_block = json.loads(json_str)
             action_result = execute_action(action_block)
             if action_result:
-                reply = re.sub(r'\{.*?"action".*?\}', action_result, reply, flags=re.DOTALL)
-        except json.JSONDecodeError:
-            pass
+                reply = reply[:start] + action_result + reply[end:]
+    except Exception:
+        pass
 
     history.append({"role": "user",      "content": user_message})
     history.append({"role": "assistant", "content": reply})
