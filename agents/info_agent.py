@@ -27,11 +27,19 @@ Keep answers concise and friendly.
 def retrieve_chunks(query: str, top_k: int = 4) -> str:
     vec     = embedder.encode([query], convert_to_numpy=True)[0].tolist()
     results = index.query(vector=vec, top_k=top_k, include_metadata=True)
-    return "\n\n".join(
-        m["metadata"].get("text", "")
-        for m in results.matches
-        if m["metadata"].get("text")
-    )
+    
+    chunks = []
+    for m in results.matches:
+        meta = m["metadata"]
+        text = meta.get("text", "")
+        if not text:
+            text = " | ".join(
+                f"{k}: {v}" for k, v in meta.items() if v and v != "Nan"
+            )
+        if text:
+            chunks.append(text)
+    
+    return "\n\n".join(chunks)
 
 def run_info_agent(user_message: str, session: dict) -> str:
     if user_message.lower().strip() in GREETINGS:
