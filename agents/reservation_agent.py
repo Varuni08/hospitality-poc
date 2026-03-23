@@ -129,7 +129,7 @@ def execute_action(action_block: dict) -> str:
 
 
 def run_reservation_agent(user_message: str, session: dict) -> str:
-        if "reservation_history" not in session:
+    if "reservation_history" not in session:
         session["reservation_history"] = []
 
     history = session["reservation_history"]
